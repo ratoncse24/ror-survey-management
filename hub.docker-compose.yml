@@ -1,0 +1,54 @@
+version: '3.7'
+
+services:
+  survey_db:
+    image: postgres:12-alpine
+    environment:
+      "POSTGRES_USER": "postgres"
+      "POSTGRES_PASSWORD": "postgres"
+      "POSTGRES_DB": "survey_db"
+      "PGDATA": "/var/lib/postgresql/data"
+    ports:
+      - 5433:5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    logging:
+      driver: none
+    networks:
+      - survey
+
+  api:
+    image: raton/survey-backend:latest
+    container_name: survey-backend
+    environment:
+      - RAILS_ENV=development
+      - RACK_ENV=development
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=survey_db
+    restart: always
+    ports:
+      - 3000:3000
+    links:
+      - survey_db
+    tty: true
+    networks:
+      - survey
+
+  web:
+    image: raton/survey-frontend:latest
+    container_name: survey-frontend
+    restart: always
+    ports:
+      - 3002:80
+    tty: true
+    networks:
+      - survey
+
+networks:
+  survey:
+    driver: "bridge"
+volumes:
+  pg_data:
+    driver: "local"
+    name: survey_volume_pg
